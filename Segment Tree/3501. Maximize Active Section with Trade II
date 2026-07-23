@@ -1,0 +1,103 @@
+from typing import List
+from bisect import bisect_left, bisect_right
+
+
+class Solution:
+    def buildSegmentTree(self, i, l, r, st, arr):
+        if l == r:
+            st[i] = arr[l]
+            return
+
+        mid = l + (r - l) // 2
+
+        self.buildSegmentTree(2 * i + 1, l, mid, st, arr)
+        self.buildSegmentTree(2 * i + 2, mid + 1, r, st, arr)
+
+        st[i] = max(st[2 * i + 1], st[2 * i + 2])
+
+    def constructST(self, arr):
+        n = len(arr)
+        st = [0] * (4 * n)
+        self.buildSegmentTree(0, 0, n - 1, st, arr)
+        return st
+
+    def querySegmentTree(self, start, end, i, l, r, st):
+        if l > end or r < start:
+            return float("-inf")
+
+        if l >= start and r <= end:
+            return st[i]
+
+        mid = l + (r - l) // 2
+
+        return max(
+            self.querySegmentTree(start, end, 2 * i + 1, l, mid, st),
+            self.querySegmentTree(start, end, 2 * i + 2, mid + 1, r, st),
+        )
+
+    def RMQ(self, st, n, a, b):
+        return self.querySegmentTree(a, b, 0, 0, n - 1, st)
+
+    def maxActiveSectionsAfterTrade(self, s: str, queries: List[List[int]]) -> List[int]:
+
+        n = len(s)
+        activeCount = s.count("1")
+
+        blockStart = []
+        blockEnd = []
+
+        i = 0
+        while i < n:
+            if s[i] == "0":
+                start = i
+                while i < n and s[i] == "0":
+                    i += 1
+
+                blockStart.append(start)
+                blockEnd.append(i - 1)
+            else:
+                i += 1
+
+        m = len(blockStart)
+
+        if m < 2:
+            return [activeCount] * len(queries)
+
+        blockSize = [0] * m
+        for i in range(m):
+            blockSize[i] = blockEnd[i] - blockStart[i] + 1
+
+        N = len(blockSize) - 1
+
+        pairSum = [0] * N
+        for i in range(N):
+            pairSum[i] = blockSize[i] + blockSize[i + 1]
+
+        st = self.constructST(pairSum)
+
+        result = []
+
+        for l, r in queries:
+
+            low = bisect_left(blockEnd, l)
+            high = bisect_right(blockStart, r) - 1
+
+            maxPairSum = 0
+
+            if low < high:
+
+                firstLen = blockEnd[low] - max(blockStart[low], l) + 1
+                lastLen = min(blockEnd[high], r) - blockStart[high] + 1
+
+                if high - low == 1:
+                    maxPairSum = firstLen + lastLen
+                else:
+                    pair1 = firstLen + blockSize[low + 1]
+                    pair2 = blockSize[high - 1] + lastLen
+                    rmq = self.RMQ(st, N, low + 1, high - 2)
+
+                    maxPairSum = max(pair1, pair2, rmq)
+
+            result.append(maxPairSum + activeCount)
+
+        return result
