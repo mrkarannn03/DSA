@@ -1,0 +1,22 @@
+class Solution:
+    def maxActiveSectionsAfterTrade(self, s: str) -> int:
+
+        ones = 0
+        zero_blocks = []
+
+        i = 0
+        while (i < len(s)):
+            if s[i] == '0':
+                start = i
+                while ((i < len(s)) and (s[i] == '0')):
+                    i += 1
+                zero_blocks.append(i - start)
+            else:
+                i += 1
+                ones += 1            
+
+        tas = 0
+        for i in range(1, len(zero_blocks) ):
+            tas = max(tas, (zero_blocks[i] + zero_blocks[i-1]))
+
+        return tas + ones
