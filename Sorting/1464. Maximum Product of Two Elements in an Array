@@ -1,0 +1,4 @@
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        d1, d2 = sorted(nums)[-2:]
+        return (d1 - 1) * (d2 - 1)
